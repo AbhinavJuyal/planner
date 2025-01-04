@@ -1,6 +1,7 @@
 import React from "react";
-import AppSideBar from "@/components/sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import AppSideBar from "@/components/app-sidebar";
+import AppBreadcrumb from "@/components/app-breadcrumb";
 
 const AppLayout = ({
   children,
@@ -10,7 +11,7 @@ const AppLayout = ({
   return (
     <SidebarProvider>
       <AppSideBar />
-      {children}
+      <AppBreadcrumb>{children}</AppBreadcrumb>
     </SidebarProvider>
   );
 };
