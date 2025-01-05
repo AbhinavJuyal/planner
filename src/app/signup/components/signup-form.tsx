@@ -10,27 +10,8 @@ import { Label } from "@/components/ui/label";
 import { FieldError, useForm } from "react-hook-form";
 import clsx from "clsx";
 import { useToast } from "@/hooks/use-toast";
-
-interface FormValues {
-  email: string;
-  password: string;
-}
-
-const passwordValidations = {
-  required: "Please enter your password",
-  minLength: {
-    value: 8,
-    message: "Password needs to have atleast 8 characters.",
-  },
-};
-
-const emailValidations = {
-  required: "Please add your email",
-  pattern: {
-    value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-    message: "Please enter a valid email",
-  },
-};
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AuthFormSchema, AuthForm } from "@/schema/auth";
 
 interface ErrorMsgProps {
   msgObj: FieldError;
@@ -46,12 +27,19 @@ const SignupForm = () => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormValues>();
+  } = useForm<AuthForm>({
+    resolver: zodResolver(AuthFormSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+    shouldFocusError: true,
+  });
   const { toast } = useToast();
 
   const submitData = async (data: { email: string; password: string }) => {
     try {
-      await fetch("/api/signup", {
+      await fetch("/api/auth", {
         method: "POST",
         body: JSON.stringify(data),
       });
@@ -71,7 +59,7 @@ const SignupForm = () => {
         <div className="grid gap-2">
           <Label htmlFor="email">Email</Label>
           <Input
-            {...register("email", emailValidations)}
+            {...register("email")}
             className={clsx(errors.email && "border-red-600")}
             id="email"
             type="email"
@@ -82,7 +70,7 @@ const SignupForm = () => {
         <div className="grid gap-2">
           <Label htmlFor="password">Password</Label>
           <Input
-            {...register("password", passwordValidations)}
+            {...register("password")}
             className={clsx(errors.password && "border-red-600")}
             name="password"
             id="password"
