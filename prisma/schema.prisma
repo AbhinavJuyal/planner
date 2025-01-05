@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model board_participants {
+  board_id   Int
+  user_id    Int
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+  boards     boards   @relation(fields: [board_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([board_id, user_id], map: "board_participants_pk")
+}
+
+model boards {
+  id                 Int                  @id(map: "boards_pk") @default(autoincrement())
+  title              String               @db.VarChar(100)
+  owner              Int
+  created_at         DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime             @default(now()) @db.Timestamptz(6)
+  board_participants board_participants[]
+  users              users                @relation(fields: [owner], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  buckets            buckets[]
+  labels             labels[]
+  tasks              tasks[]
+}
+
+model buckets {
+  id         Int      @id(map: "buckets_pk") @default(autoincrement())
+  board_id   Int
+  title      String?  @db.VarChar(50)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+  boards     boards?  @relation(fields: [board_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tasks      tasks[]
+}
+
+model labels {
+  id          Int           @id(map: "labels_pk") @default(autoincrement())
+  board_id    Int
+  title       String        @db.VarChar(50)
+  color       String        @db.VarChar(10)
+  created_at  DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime      @default(now()) @db.Timestamptz(6)
+  boards      boards?       @relation(fields: [board_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  task_labels task_labels[]
+}
+
+model task_labels {
+  task_id    Int
+  label_id   Int
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+  labels     labels   @relation(fields: [label_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tasks      tasks    @relation(fields: [task_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([task_id, label_id], map: "tasks_labels_pk")
+}
+
+model tasks {
+  id             Int              @id(map: "tasks_pk") @default(autoincrement())
+  title          String
+  due_date       DateTime         @db.Timestamptz(6)
+  board_id       Int
+  bucket_id      Int
+  progress       progress_values
+  priority       priority_values
+  created_at     DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime         @default(now()) @db.Timestamptz(6)
+  task_labels    task_labels[]
+  boards         boards?          @relation(fields: [board_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  buckets        buckets?         @relation(fields: [bucket_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tasks_assigned tasks_assigned[]
+}
+
+model tasks_assigned {
+  task_id    Int
+  user_id    Int
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+  tasks      tasks    @relation(fields: [task_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([task_id, user_id], map: "tasks_assigned_pk")
+}
+
+model users {
+  id                 Int                  @id(map: "users_pk") @default(autoincrement())
+  fullname           String               @default("Anonymous User") @db.VarChar(50)
+  created_at         DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime             @default(now()) @db.Timestamptz(6)
+  email              String               @unique()
+  password           String
+  board_participants board_participants[]
+  boards             boards[]
+  tasks_assigned     tasks_assigned[]
+}
+
+enum priority_values {
+  LOW
+  MEDIUM
+  IMPORTANT
+  URGENT
+}
+
+enum progress_values {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
