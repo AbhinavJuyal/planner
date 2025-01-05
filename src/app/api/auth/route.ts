@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     }
   } catch {
     responseObj = {
-      status: 400,
+      status: 500,
       data: null,
       errors: [
         {

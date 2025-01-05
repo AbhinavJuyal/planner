@@ -10,8 +10,10 @@ import { Label } from "@/components/ui/label";
 import { FieldError, useForm } from "react-hook-form";
 import clsx from "clsx";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthFormSchema, AuthForm } from "@/schema/auth";
+import { AppErrorCodes } from "@/lib/constants";
 
 interface ErrorMsgProps {
   msgObj: FieldError;
@@ -39,12 +41,32 @@ const SignupForm = () => {
 
   const submitData = async (data: { email: string; password: string }) => {
     try {
-      await fetch("/api/auth", {
+      const response = await fetch("/api/auth", {
         method: "POST",
         body: JSON.stringify(data),
       });
-    } catch (error) {
-      console.log((error as Error).message);
+
+      const responseData = await response.json();
+
+      // error handling in frontend
+      if (response.status === 500) throw new Error("Signup Failed");
+
+      if (responseData.errors) {
+        const [err] = responseData.errors;
+
+        if (err.code === AppErrorCodes.ERR_USER_PRESENT) {
+          toast({
+            title: "This email is already registered",
+            description: "Please go to login page",
+            action: (
+              <ToastAction asChild altText="Try again">
+                <Link href="/login">Go To Login</Link>
+              </ToastAction>
+            ),
+          });
+        }
+      }
+    } catch {
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
