@@ -14,6 +14,7 @@ import { ToastAction } from "@/components/ui/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthFormSchema, AuthForm } from "@/schema/auth";
 import { AppErrorCodes } from "@/lib/constants";
+import { useRouter } from "next/navigation";
 
 interface ErrorMsgProps {
   msgObj: FieldError;
@@ -38,6 +39,7 @@ const SignupForm = () => {
     shouldFocusError: true,
   });
   const { toast } = useToast();
+  const router = useRouter();
 
   const submitData = async (data: { email: string; password: string }) => {
     try {
@@ -48,8 +50,13 @@ const SignupForm = () => {
 
       const responseData = await response.json();
 
+      if (responseData.status === 201) {
+        router.push("/app/my-plans");
+        return;
+      }
+
       // error handling in frontend
-      if (response.status === 500) throw new Error("Signup Failed");
+      if (responseData.status === 500) throw new Error("Signup Failed");
 
       if (responseData.errors) {
         const [err] = responseData.errors;

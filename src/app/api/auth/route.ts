@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { AuthFormSchema } from "@/schema/auth";
 import bcrypt from "bcrypt";
+import { generateJWT } from "../utils";
+import { cookies } from "next/headers";
 
 const saltRounds = Number(process.env.HASH_SALT_ROUNDS) || 10;
 
@@ -16,7 +18,7 @@ const createUser = async ({
     const hashedPassword = await bcrypt.hash(password, salt);
     await prisma.$queryRaw`
       INSERT INTO users (email, password)
-      VALUES (${email}, ${hashedPassword});
+      VALUES (${email}, ${hashedPassword})
     `;
   } catch (error) {
     throw error;
@@ -39,7 +41,7 @@ export async function POST(request: Request) {
   }
 
   let responseObj: ApiResponseType = {
-    status: 200,
+    status: 201,
     data: null,
     errors: null,
     message: "user created successfully!",
@@ -56,6 +58,9 @@ export async function POST(request: Request) {
     // create new user
     if (result.length === 0) {
       await createUser(payload);
+      const jwt = await generateJWT(payload);
+      const cookieStore = cookies();
+      cookieStore.set("jwt", jwt);
     } else {
       responseObj = {
         status: 400,
@@ -68,8 +73,6 @@ export async function POST(request: Request) {
         ],
         message: null,
       };
-
-      return Response.json(responseObj, { status: 400 });
     }
   } catch {
     responseObj = {
