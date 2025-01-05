@@ -1,20 +1,17 @@
 "use client";
 
 import React from "react";
-
 import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
+import clsx from "clsx";
+import { FieldError, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FieldError, useForm } from "react-hook-form";
-import clsx from "clsx";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { ToastAction } from "@/components/ui/toast";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { AuthFormSchema, AuthForm } from "@/schema/auth";
+import { AuthForm, AuthFormSchema } from "@/schema/auth";
 import { AppErrorCodes } from "@/lib/constants";
-import { useRouter } from "next/navigation";
 
 interface ErrorMsgProps {
   msgObj: FieldError;
@@ -25,7 +22,7 @@ const ErrorMsg = ({ msgObj }: ErrorMsgProps) => {
   return <p className="text-xs text-red-600">{message}</p>;
 };
 
-const SignupForm = () => {
+const LoginForm = () => {
   const {
     register,
     handleSubmit,
@@ -43,33 +40,29 @@ const SignupForm = () => {
 
   const submitData = async (data: { email: string; password: string }) => {
     try {
-      const response = await fetch("/api/auth", {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         body: JSON.stringify(data),
       });
 
       const responseData = await response.json();
 
-      if (responseData.status === 201) {
+      if (responseData.status === 200) {
         router.push("/app/my-plans");
         return;
       }
 
       // error handling in frontend
-      if (responseData.status === 500) throw new Error("Signup Failed");
+      if (responseData.status === 500) throw new Error("Login Failed");
 
       if (responseData.errors) {
         const [err] = responseData.errors;
 
-        if (err.code === AppErrorCodes.ERR_USER_PRESENT) {
+        if (err.code === AppErrorCodes.ERR_WRONG_PASSWORD) {
           toast({
-            title: "This email is already registered",
-            description: "Please go to login page",
-            action: (
-              <ToastAction asChild altText="Try again">
-                <Link href="/login">Go To Login</Link>
-              </ToastAction>
-            ),
+            variant: "destructive",
+            title: "The password provided is incorrect",
+            description: "Please enter correct password",
           });
         }
       }
@@ -110,17 +103,17 @@ const SignupForm = () => {
           )}
         </div>
         <Button type="submit" className="w-full">
-          Sign up
+          Login
         </Button>
       </div>
       <div className="mt-4 text-center text-sm">
-        Already have an account?&nbsp;&nbsp;
-        <Link href="/login" className="underline underline-offset-4">
-          Login
+        Don&apos;t have an account?{" "}
+        <Link href="/signup" className="underline underline-offset-4">
+          Sign up
         </Link>
       </div>
     </form>
   );
 };
 
-export default SignupForm;
+export default LoginForm;

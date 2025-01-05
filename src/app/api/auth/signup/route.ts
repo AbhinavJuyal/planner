@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { AuthFormSchema } from "@/schema/auth";
 import bcrypt from "bcrypt";
-import { generateJWT } from "../utils";
+import { generateJWT } from "../../utils";
 import { cookies } from "next/headers";
 
 const saltRounds = Number(process.env.HASH_SALT_ROUNDS) || 10;
