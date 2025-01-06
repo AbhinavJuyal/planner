@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthFormSchema, AuthForm } from "@/schema/auth";
-import { AppErrorCodes } from "@/lib/constants";
+import { ApiErrorCodes } from "@/utils/constants";
 import { useRouter } from "next/navigation";
 
 interface ErrorMsgProps {
@@ -61,7 +61,7 @@ const SignupForm = () => {
       if (responseData.errors) {
         const [err] = responseData.errors;
 
-        if (err.code === AppErrorCodes.ERR_USER_PRESENT) {
+        if (err.code === ApiErrorCodes.ERR_USER_PRESENT) {
           toast({
             title: "This email is already registered",
             description: "Please go to login page",

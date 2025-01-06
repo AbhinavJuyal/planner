@@ -1,6 +1,11 @@
-interface ApiResponseType {
+interface ApiError {
+  code: string;
+  message: string;
+}
+
+interface ApiResponse {
   status: number;
   data: Record<string, unknown> | null;
-  errors: { code: string; message: string }[] | null;
+  errors: ApiError[] | null;
   message: string | null;
 }

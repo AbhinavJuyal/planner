@@ -1,102 +1,77 @@
-import { prisma } from "@/lib/prisma";
-import { AuthForm, AuthFormSchema } from "@/schema/auth";
-import { generateJWT } from "../../utils";
 import { cookies } from "next/headers";
-import { users } from "@prisma/client";
 import bcrypt from "bcrypt";
+import {
+  createErrorResponse,
+  getUserByEmail,
+  ApiErrorMapping,
+  generateJWT,
+  createSuccessResponse,
+  logger,
+  validateAuthForm,
+} from "@/utils/api-service";
+import { ApiErrorCodes } from "@/utils/constants";
 
-const checkPassword = async (payload: AuthForm, dbResponse: users) => {
+const checkPassword = async (userPassword: string, dbPassword: string) => {
   try {
-    const { password } = payload;
-    const { password: dbPassword } = dbResponse;
-    return await bcrypt.compare(password, dbPassword);
+    return await bcrypt.compare(userPassword, dbPassword);
   } catch (error) {
     throw error;
   }
 };
 
-// const loginUser = async (payload: AuthForm, dbResponse: users) => {
-// };
-
 export async function POST(request: Request) {
-  const payload = await request.json();
-
-  const validationResult = AuthFormSchema.safeParse(payload);
-
-  if (!validationResult.success) {
-    return Response.json(
-      {
-        message: "validation error",
-        error: validationResult.error,
-      },
-      { status: 400 },
-    );
-  }
-
-  let responseObj: ApiResponseType = {
-    status: 200,
-    data: null,
-    errors: null,
-    message: "user logged in!",
-  };
-
   try {
-    const result: users[] = await prisma.$queryRaw`
-      SELECT email, password
-      FROM users
-      WHERE email = ${payload.email};
-    `;
+    const payload = await request.json();
+    const { valid, errors, data } = validateAuthForm(payload);
 
-    console.log(result, "result");
-    // user present
-    if (result.length !== 0) {
-      const dbResponse = result[0];
-      const verified = await checkPassword(payload, dbResponse);
-
-      if (verified) {
-        const jwt = await generateJWT(payload);
-        const cookieStore = cookies();
-        cookieStore.set("jwt", jwt);
-      } else {
-        responseObj = {
-          status: 400,
-          data: null,
-          errors: [
-            {
-              code: "ERR_WRONG_PASSWORD",
-              message: "invalid password",
-            },
-          ],
-          message: null,
-        };
-      }
-    } else {
-      responseObj = {
+    if (!valid) {
+      return Response.json(errors, {
         status: 400,
-        data: null,
-        errors: [
-          {
-            code: "ERR_USER_NOT_PRESENT",
-            message: "user does not exists",
-          },
-        ],
-        message: null,
-      };
+      });
     }
-  } catch (error) {
-    console.error(error);
-    responseObj = {
-      status: 500,
-      data: null,
-      errors: [
-        {
-          code: "ERR_LOGIN_FAILED",
-          message: "user login failed!",
-        },
-      ],
-      message: null,
-    };
-  }
 
-  return Response.json(responseObj, { status: responseObj.status });
+    const { email } = data;
+
+    const user = await getUserByEmail({ email });
+
+    // user not registerd
+    if (!user) {
+      const error = ApiErrorMapping[ApiErrorCodes.ERR_USER_NOT_PRESENT];
+      return Response.json(createErrorResponse([{ ...error }]), {
+        status: 400,
+      });
+    }
+
+    // user is registered
+    const verified = await checkPassword(payload.password, user.password);
+
+    // password is invalid
+    if (!verified) {
+      const error = ApiErrorMapping[ApiErrorCodes.ERR_WRONG_PASSWORD];
+      return Response.json(createErrorResponse([{ ...error }]), {
+        status: 400,
+      });
+    }
+
+    // password is valid
+    const jwt = await generateJWT({
+      email: user.email,
+      fullname: user.fullname,
+    });
+    const cookieStore = cookies();
+    cookieStore.set("jwt", jwt, {
+      httpOnly: true,
+      maxAge: Number(process.env.JWT_EXPIRY || 86400),
+    });
+
+    return Response.json(createSuccessResponse("User logged in!"), {
+      status: 200,
+    });
+  } catch (error) {
+    logger.fatal(error);
+    const errorToSend = ApiErrorMapping[ApiErrorCodes.ERR_SERVER_FAIL];
+    return Response.json(createErrorResponse([{ ...errorToSend }]), {
+      status: 500,
+    });
+  }
 }

@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { AuthForm, AuthFormSchema } from "@/schema/auth";
-import { AppErrorCodes } from "@/lib/constants";
+import { ApiErrorCodes } from "@/utils/constants";
 
 interface ErrorMsgProps {
   msgObj: FieldError;
@@ -58,7 +58,7 @@ const LoginForm = () => {
       if (responseData.errors) {
         const [err] = responseData.errors;
 
-        if (err.code === AppErrorCodes.ERR_WRONG_PASSWORD) {
+        if (err.code === ApiErrorCodes.ERR_WRONG_PASSWORD) {
           toast({
             variant: "destructive",
             title: "The password provided is incorrect",

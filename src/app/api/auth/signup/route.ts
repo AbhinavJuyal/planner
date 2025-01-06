@@ -1,7 +1,16 @@
 import { prisma } from "@/lib/prisma";
-import { AuthFormSchema } from "@/schema/auth";
+import {
+  ApiErrorMapping,
+  createErrorResponse,
+  createSuccessResponse,
+  generateJWT,
+  getUserByEmail,
+  logger,
+  validateAuthForm,
+} from "@/utils/api-service";
+import { ApiErrorCodes } from "@/utils/constants";
+import { users } from "@prisma/client";
 import bcrypt from "bcrypt";
-import { generateJWT } from "../../utils";
 import { cookies } from "next/headers";
 
 const saltRounds = Number(process.env.HASH_SALT_ROUNDS) || 10;
@@ -16,77 +25,61 @@ const createUser = async ({
   try {
     const salt = await bcrypt.genSalt(saltRounds);
     const hashedPassword = await bcrypt.hash(password, salt);
-    await prisma.$queryRaw`
+    const result: users[] = await prisma.$queryRaw`
       INSERT INTO users (email, password)
       VALUES (${email}, ${hashedPassword})
+      RETURNING email, username;
     `;
+    return result[0];
   } catch (error) {
     throw error;
   }
 };
 
 export async function POST(request: Request) {
-  const payload = await request.json();
-
-  const validationResult = AuthFormSchema.safeParse(payload);
-
-  if (!validationResult.success) {
-    return Response.json(
-      {
-        message: "validation error",
-        error: validationResult.error,
-      },
-      { status: 400 },
-    );
-  }
-
-  let responseObj: ApiResponseType = {
-    status: 201,
-    data: null,
-    errors: null,
-    message: "user created successfully!",
-  };
-
   try {
-    const result: unknown[] = await prisma.$queryRaw`
-      SELECT email
-      FROM users
-      WHERE email = ${payload.email};
-    `;
+    const payload = await request.json();
+    const { valid, errors, data } = validateAuthForm(payload);
+
+    if (!valid) {
+      return Response.json(errors, {
+        status: 400,
+      });
+    }
+
+    const { email } = data;
+
+    const user = await getUserByEmail({ email });
+
+    // user already exists
+    if (user) {
+      const error = ApiErrorMapping[ApiErrorCodes.ERR_USER_PRESENT];
+      return Response.json(createErrorResponse([{ ...error }]), {
+        status: 400,
+      });
+    }
 
     // no existing user
-    // create new user
-    if (result.length === 0) {
-      await createUser(payload);
-      const jwt = await generateJWT(payload);
-      const cookieStore = cookies();
-      cookieStore.set("jwt", jwt);
-    } else {
-      responseObj = {
-        status: 400,
-        data: null,
-        errors: [
-          {
-            code: "ERR_USER_PRESENT",
-            message: "user already exists",
-          },
-        ],
-        message: null,
-      };
-    }
-  } catch {
-    responseObj = {
-      status: 500,
-      data: null,
-      errors: [
-        {
-          code: "ERR_SIGNUP_FAILED",
-          message: "user creation failed!",
-        },
-      ],
-      message: null,
-    };
-  }
+    const newUser = await createUser(payload);
+    const jwt = await generateJWT({
+      email: newUser.email,
+      fullname: newUser.fullname,
+    });
+    const cookieStore = cookies();
+    cookieStore.set("jwt", jwt, {
+      httpOnly: true,
+      maxAge: Number(process.env.JWT_EXPIRY || 86400),
+    });
 
-  return Response.json(responseObj, { status: responseObj.status });
+    return Response.json(
+      createSuccessResponse("user created successfully", null, 201),
+      { status: 201 },
+    );
+  } catch (error) {
+    logger.fatal(error);
+    const errorToSend = ApiErrorMapping[ApiErrorCodes.ERR_SERVER_FAIL];
+    return Response.json(createErrorResponse([{ ...errorToSend }]), {
+      status: 500,
+    });
+  }
 }
