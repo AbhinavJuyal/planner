@@ -1,15 +1,13 @@
 import { cookies } from "next/headers";
 import bcrypt from "bcrypt";
 import {
-  createErrorResponse,
   getUserByEmail,
-  ApiErrorMapping,
   generateJWT,
-  createSuccessResponse,
   logger,
   validateAuthForm,
 } from "@/utils/api-service";
-import { ApiErrorCodes } from "@/utils/constants";
+import { ServiceResponse } from "@/utils/serviceResponse";
+import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
 const checkPassword = async (userPassword: string, dbPassword: string) => {
   try {
@@ -36,10 +34,12 @@ export async function POST(request: Request) {
 
     // user not registerd
     if (!user) {
-      const error = ApiErrorMapping[ApiErrorCodes.ERR_USER_NOT_PRESENT];
-      return Response.json(createErrorResponse([{ ...error }]), {
-        status: 400,
-      });
+      return Response.json(
+        ServiceResponse.failure("User is not registered!", null),
+        {
+          status: StatusCodes.BAD_REQUEST,
+        },
+      );
     }
 
     // user is registered
@@ -47,10 +47,12 @@ export async function POST(request: Request) {
 
     // password is invalid
     if (!verified) {
-      const error = ApiErrorMapping[ApiErrorCodes.ERR_WRONG_PASSWORD];
-      return Response.json(createErrorResponse([{ ...error }]), {
-        status: 400,
-      });
+      return Response.json(
+        ServiceResponse.failure("Password is incorrect.", null),
+        {
+          status: StatusCodes.BAD_REQUEST,
+        },
+      );
     }
 
     // password is valid
@@ -58,20 +60,28 @@ export async function POST(request: Request) {
       email: user.email,
       fullname: user.fullname,
     });
+
     const cookieStore = cookies();
+
     cookieStore.set("jwt", jwt, {
       httpOnly: true,
       maxAge: Number(process.env.JWT_EXPIRY || 86400),
     });
 
-    return Response.json(createSuccessResponse("User logged in!"), {
-      status: 200,
+    return Response.json(ServiceResponse.success("User now logged in!", data), {
+      status: StatusCodes.OK,
     });
   } catch (error) {
     logger.fatal(error);
-    const errorToSend = ApiErrorMapping[ApiErrorCodes.ERR_SERVER_FAIL];
-    return Response.json(createErrorResponse([{ ...errorToSend }]), {
-      status: 500,
-    });
+    return Response.json(
+      ServiceResponse.failure(
+        ReasonPhrases.INTERNAL_SERVER_ERROR,
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      ),
+      {
+        status: 500,
+      },
+    );
   }
 }
