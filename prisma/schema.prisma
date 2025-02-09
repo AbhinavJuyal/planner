@@ -7,109 +7,122 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model board_participants {
-  board_id   Int
-  user_id    Int
-  created_at DateTime @default(now()) @db.Timestamptz(6)
-  updated_at DateTime @default(now()) @db.Timestamptz(6)
-  boards     boards   @relation(fields: [board_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model BoardParticipant {
+  boardId   Int      @map("board_id")
+  userId    Int      @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@id([board_id, user_id], map: "board_participants_pk")
+  @@id([boardId, userId])
+  @@map("board_participants")
 }
 
-model boards {
-  id                 Int                  @id(map: "boards_pk") @default(autoincrement())
-  title              String               @db.VarChar(100)
-  owner              Int
-  created_at         DateTime             @default(now()) @db.Timestamptz(6)
-  updated_at         DateTime             @default(now()) @db.Timestamptz(6)
-  board_participants board_participants[]
-  users              users                @relation(fields: [owner], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  buckets            buckets[]
-  labels             labels[]
-  tasks              tasks[]
+model Board {
+  id           Int                @id @default(autoincrement()) @map("id")
+  title        String             @db.VarChar(100)
+  ownerId      Int                @map("owner")
+  createdAt    DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime           @default(now()) @map("updated_at") @db.Timestamptz(6)
+  owner        User               @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  participants BoardParticipant[]
+  buckets      Bucket[]
+  labels       Label[]
+  tasks        Task[]
+
+  @@map("boards")
 }
 
-model buckets {
-  id         Int      @id(map: "buckets_pk") @default(autoincrement())
-  board_id   Int
-  title      String?  @db.VarChar(50)
-  created_at DateTime @default(now()) @db.Timestamptz(6)
-  updated_at DateTime @default(now()) @db.Timestamptz(6)
-  boards     boards?  @relation(fields: [board_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tasks      tasks[]
+model Bucket {
+  id        Int      @id @default(autoincrement()) @map("id")
+  boardId   Int      @map("board_id")
+  title     String?  @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  board     Board?   @relation(fields: [boardId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tasks     Task[]
+
+  @@map("buckets")
 }
 
-model labels {
-  id          Int           @id(map: "labels_pk") @default(autoincrement())
-  board_id    Int
-  title       String        @db.VarChar(50)
-  color       String        @db.VarChar(10)
-  created_at  DateTime      @default(now()) @db.Timestamptz(6)
-  updated_at  DateTime      @default(now()) @db.Timestamptz(6)
-  boards      boards?       @relation(fields: [board_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  task_labels task_labels[]
+model Label {
+  id         Int         @id @default(autoincrement()) @map("id")
+  boardId    Int         @map("board_id")
+  title      String      @db.VarChar(50)
+  color      String      @db.VarChar(10)
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime    @default(now()) @map("updated_at") @db.Timestamptz(6)
+  board      Board?      @relation(fields: [boardId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  taskLabels TaskLabel[]
+
+  @@map("labels")
 }
 
-model task_labels {
-  task_id    Int
-  label_id   Int
-  created_at DateTime @default(now()) @db.Timestamptz(6)
-  updated_at DateTime @default(now()) @db.Timestamptz(6)
-  labels     labels   @relation(fields: [label_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tasks      tasks    @relation(fields: [task_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model TaskLabel {
+  taskId    Int      @map("task_id")
+  labelId   Int      @map("label_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  label     Label    @relation(fields: [labelId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@id([task_id, label_id], map: "tasks_labels_pk")
+  @@id([taskId, labelId])
+  @@map("task_labels")
 }
 
-model tasks {
-  id             Int              @id(map: "tasks_pk") @default(autoincrement())
-  title          String
-  due_date       DateTime         @db.Timestamptz(6)
-  board_id       Int
-  bucket_id      Int
-  progress       progress_values
-  priority       priority_values
-  created_at     DateTime         @default(now()) @db.Timestamptz(6)
-  updated_at     DateTime         @default(now()) @db.Timestamptz(6)
-  task_labels    task_labels[]
-  boards         boards?          @relation(fields: [board_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  buckets        buckets?         @relation(fields: [bucket_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tasks_assigned tasks_assigned[]
+model Task {
+  id          Int              @id @default(autoincrement()) @map("id")
+  title       String
+  dueDate     DateTime         @map("due_date") @db.Timestamptz(6)
+  boardId     Int              @map("board_id")
+  bucketId    Int              @map("bucket_id")
+  progress    ProgressValues   @map("progress")
+  priority    PriorityValues   @map("priority")
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime         @default(now()) @map("updated_at") @db.Timestamptz(6)
+  taskLabels  TaskLabel[]
+  board       Board?           @relation(fields: [boardId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  bucket      Bucket?          @relation(fields: [bucketId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  assignments TaskAssignment[]
+
+  @@map("tasks")
 }
 
-model tasks_assigned {
-  task_id    Int
-  user_id    Int
-  created_at DateTime @default(now()) @db.Timestamptz(6)
-  updated_at DateTime @default(now()) @db.Timestamptz(6)
-  tasks      tasks    @relation(fields: [task_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model TaskAssignment {
+  taskId    Int      @map("task_id")
+  userId    Int      @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@id([task_id, user_id], map: "tasks_assigned_pk")
+  @@id([taskId, userId])
+  @@map("tasks_assigned")
 }
 
-model users {
-  id                 Int                  @id(map: "users_pk") @default(autoincrement())
-  fullname           String               @default("Anonymous User") @db.VarChar(50)
-  created_at         DateTime             @default(now()) @db.Timestamptz(6)
-  updated_at         DateTime             @default(now()) @db.Timestamptz(6)
-  email              String               @unique()
-  password           String
-  board_participants board_participants[]
-  boards             boards[]
-  tasks_assigned     tasks_assigned[]
+model User {
+  id           Int                @id @default(autoincrement()) @map("id")
+  fullName     String             @default("Anonymous User") @map("fullname") @db.VarChar(50)
+  createdAt    DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime           @default(now()) @map("updated_at") @db.Timestamptz(6)
+  email        String             @unique()
+  password     String
+  participants BoardParticipant[]
+  boards       Board[]
+  assignments  TaskAssignment[]
+
+  @@map("users")
 }
 
-enum priority_values {
+enum PriorityValues {
   LOW
   MEDIUM
   IMPORTANT
   URGENT
 }
 
-enum progress_values {
+enum ProgressValues {
   NOT_STARTED
   IN_PROGRESS
   COMPLETED
