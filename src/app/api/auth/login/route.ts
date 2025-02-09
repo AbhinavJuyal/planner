@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import {
   getUserByEmail,
   generateJWT,
-  logger,
+  apiLogger,
   validateAuthForm,
 } from "@/utils/api-service";
 import { ServiceResponse } from "@/utils/serviceResponse";
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     // password is valid
     const jwt = await generateJWT({
       email: user.email,
-      fullname: user.fullname,
+      fullname: user.fullName,
     });
 
     const cookieStore = cookies();
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
       status: StatusCodes.OK,
     });
   } catch (error) {
-    logger.fatal(error);
+    apiLogger.fatal(error);
     return Response.json(
       ServiceResponse.failure(
         ReasonPhrases.INTERNAL_SERVER_ERROR,

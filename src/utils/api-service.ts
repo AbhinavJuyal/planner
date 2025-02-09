@@ -2,45 +2,15 @@ import "server-only";
 import jwt from "jsonwebtoken";
 import { ZodError } from "zod";
 import { prisma } from "@/lib/prisma";
-import { AuthForm, AuthFormSchema } from "@/schema/auth";
-import { users } from "@prisma/client";
-import { ApiErrorCodes } from "@/utils/constants";
+import { AuthFormType, AuthFormSchema } from "@/schema/auth";
+import { User } from "@prisma/client";
 import { Logger } from "tslog";
 
-export const ApiErrorMapping: Record<
-  ApiErrorCodes,
-  { status: number; code: ApiErrorCodes; message: string }
-> = {
-  // signup errors
-  [ApiErrorCodes.ERR_USER_PRESENT]: {
-    status: 400,
-    code: ApiErrorCodes.ERR_USER_PRESENT,
-    message: "User is already registered",
-  },
-
-  // login errors
-  [ApiErrorCodes.ERR_USER_NOT_PRESENT]: {
-    status: 400,
-    code: ApiErrorCodes.ERR_USER_NOT_PRESENT,
-    message: "User is not registered",
-  },
-  [ApiErrorCodes.ERR_WRONG_PASSWORD]: {
-    status: 400,
-    code: ApiErrorCodes.ERR_WRONG_PASSWORD,
-    message: "Password is incorrect.",
-  },
-
-  // server error
-  [ApiErrorCodes.ERR_SERVER_FAIL]: {
-    status: 500,
-    code: ApiErrorCodes.ERR_SERVER_FAIL,
-    message: "Unable to perform action. Try again later",
-  },
-} as const;
-
-export const getUserByEmail = async ({ email }: Omit<AuthForm, "password">) => {
+export const getUserByEmail = async ({
+  email,
+}: Omit<AuthFormType, "password">) => {
   try {
-    const result: users[] = await prisma.$queryRaw`
+    const result: User[] = await prisma.$queryRaw`
       SELECT email, password, fullname
       FROM users
       WHERE email = ${email};
@@ -63,6 +33,16 @@ export async function generateJWT(payload: {
   return jwt.sign(payload, jwtSecret, {
     expiresIn: jwtExpiry,
   });
+}
+
+export async function verifyJWT<T>(token: string): Promise<T | undefined> {
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) throw new Error("JWT_SECRET not present");
+  try {
+    return jwt.verify(token, jwtSecret) as T;
+  } catch {
+    return;
+  }
 }
 
 export function createSuccessResponse(
@@ -97,9 +77,9 @@ export function formatValidationErrors(zodError: ZodError): ApiError[] {
   }));
 }
 
-export const logger = new Logger({ name: "api-service" });
+export const apiLogger = new Logger({ name: "api" });
 
-export const validateAuthForm = (payload: AuthForm) => {
+export const validateAuthForm = (payload: AuthFormType) => {
   const validationResult = AuthFormSchema.safeParse(payload);
 
   if (!validationResult.success) {

@@ -13,4 +13,4 @@ export const AuthFormSchema = z.object({
     .min(8, "Password needs to have atleast 8 characters"),
 });
 
-export type AuthForm = z.infer<typeof AuthFormSchema>;
+export type AuthFormType = z.infer<typeof AuthFormSchema>;

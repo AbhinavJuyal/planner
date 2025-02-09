@@ -12,25 +12,17 @@ import clsx from "clsx";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AuthFormSchema, AuthForm } from "@/schema/auth";
+import { AuthFormSchema, AuthFormType } from "@/schema/auth";
 import { ApiErrorCodes } from "@/utils/constants";
 import { useRouter } from "next/navigation";
-
-interface ErrorMsgProps {
-  msgObj: FieldError;
-}
-
-const ErrorMsg = ({ msgObj }: ErrorMsgProps) => {
-  const { message } = msgObj;
-  return <p className="text-xs text-red-600">{message}</p>;
-};
+import FormErrorMsg from "@/components/form-error-msg";
 
 const SignupForm = () => {
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<AuthForm>({
+  } = useForm<AuthFormType>({
     resolver: zodResolver(AuthFormSchema),
     defaultValues: {
       email: "",
@@ -94,7 +86,7 @@ const SignupForm = () => {
             type="email"
             placeholder="m@example.com"
           />
-          {errors.email && <ErrorMsg msgObj={errors.email as FieldError} />}
+          {errors.email && <FormErrorMsg msgObj={errors.email as FieldError} />}
         </div>
         <div className="grid gap-2">
           <Label htmlFor="password">Password</Label>
@@ -106,7 +98,7 @@ const SignupForm = () => {
             type="password"
           />
           {errors.password && (
-            <ErrorMsg msgObj={errors.password as FieldError} />
+            <FormErrorMsg msgObj={errors.password as FieldError} />
           )}
         </div>
         <Button type="submit" className="w-full">

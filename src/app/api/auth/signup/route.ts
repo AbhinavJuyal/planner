@@ -1,16 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import {
-  ApiErrorMapping,
-  createErrorResponse,
-  createSuccessResponse,
   generateJWT,
   getUserByEmail,
-  logger,
+  apiLogger,
   validateAuthForm,
 } from "@/utils/api-service";
-import { ApiErrorCodes } from "@/utils/constants";
-import { users } from "@prisma/client";
+import { ServiceResponse } from "@/utils/serviceResponse";
+import { User } from "@prisma/client";
 import bcrypt from "bcrypt";
+import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import { cookies } from "next/headers";
 
 const saltRounds = Number(process.env.HASH_SALT_ROUNDS) || 10;
@@ -18,17 +16,14 @@ const saltRounds = Number(process.env.HASH_SALT_ROUNDS) || 10;
 const createUser = async ({
   email,
   password,
-}: {
-  email: string;
-  password: string;
-}) => {
+}: Pick<User, "email" | "password" | "fullName">) => {
   try {
     const salt = await bcrypt.genSalt(saltRounds);
     const hashedPassword = await bcrypt.hash(password, salt);
-    const result: users[] = await prisma.$queryRaw`
+    const result: User[] = await prisma.$queryRaw`
       INSERT INTO users (email, password)
       VALUES (${email}, ${hashedPassword})
-      RETURNING email, username;
+      RETURNING email, username, fullname;
     `;
     return result[0];
   } catch (error) {
@@ -53,33 +48,43 @@ export async function POST(request: Request) {
 
     // user already exists
     if (user) {
-      const error = ApiErrorMapping[ApiErrorCodes.ERR_USER_PRESENT];
-      return Response.json(createErrorResponse([{ ...error }]), {
-        status: 400,
-      });
+      return Response.json(
+        ServiceResponse.failure("User already exists!", null),
+        {
+          status: StatusCodes.BAD_REQUEST,
+        },
+      );
     }
 
     // no existing user
     const newUser = await createUser(payload);
     const jwt = await generateJWT({
       email: newUser.email,
-      fullname: newUser.fullname,
+      fullname: newUser.fullName,
     });
+
     const cookieStore = cookies();
+
     cookieStore.set("jwt", jwt, {
       httpOnly: true,
       maxAge: Number(process.env.JWT_EXPIRY || 86400),
     });
 
     return Response.json(
-      createSuccessResponse("user created successfully", null, 201),
+      ServiceResponse.success(
+        "User created successfully!",
+        null,
+        StatusCodes.CREATED,
+      ),
       { status: 201 },
     );
   } catch (error) {
-    logger.fatal(error);
-    const errorToSend = ApiErrorMapping[ApiErrorCodes.ERR_SERVER_FAIL];
-    return Response.json(createErrorResponse([{ ...errorToSend }]), {
-      status: 500,
-    });
+    apiLogger.fatal(error);
+    return Response.json(
+      ServiceResponse.failure(ReasonPhrases.INTERNAL_SERVER_ERROR, null),
+      {
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+      },
+    );
   }
 }
