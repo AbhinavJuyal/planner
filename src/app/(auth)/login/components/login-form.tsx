@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AuthFormType, AuthFormSchema } from "@/schema/auth";
 import { ApiErrorCodes } from "@/utils/constants";
 import FormErrorMsg from "@/components/form-error-msg";
+import { appLogger } from "@/utils/logger";
 
 const LoginForm = () => {
   const {
@@ -39,13 +40,14 @@ const LoginForm = () => {
 
       const responseData = await response.json();
 
-      if (responseData.status === 200) {
+      if (responseData.statusCode === 200) {
+        // router.push("/app/my-plans" + `?q=${Math.random()}`);
         router.push("/app/my-plans");
         return;
       }
 
       // error handling in frontend
-      if (responseData.status === 500) throw new Error("Login Failed");
+      if (responseData.statusCode === 500) throw new Error("Login Failed");
 
       if (responseData.errors) {
         const [err] = responseData.errors;
@@ -58,7 +60,8 @@ const LoginForm = () => {
           });
         }
       }
-    } catch {
+    } catch (error) {
+      appLogger.error(error);
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
@@ -67,8 +70,13 @@ const LoginForm = () => {
     }
   };
 
+  const formSubmitHandler = (event: React.FormEvent) => {
+    event.preventDefault();
+    handleSubmit(submitData)(event);
+  };
+
   return (
-    <form onSubmit={handleSubmit(submitData)}>
+    <form onSubmit={formSubmitHandler}>
       <div className="flex flex-col gap-6">
         <div className="grid gap-2">
           <Label htmlFor="email">Email</Label>

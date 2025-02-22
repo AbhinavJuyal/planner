@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import {
-  generateJWT,
   getUserByEmail,
   apiLogger,
   validateAuthForm,
 } from "@/utils/api-service";
+import { generateJWT } from "@/utils/jwt";
 import { ServiceResponse } from "@/utils/serviceResponse";
 import { User } from "@prisma/client";
 import bcrypt from "bcrypt";

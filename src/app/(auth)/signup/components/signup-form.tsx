@@ -42,13 +42,13 @@ const SignupForm = () => {
 
       const responseData = await response.json();
 
-      if (responseData.status === 201) {
+      if (responseData.statusCode === 201) {
         router.push("/app/my-plans");
         return;
       }
 
       // error handling in frontend
-      if (responseData.status === 500) throw new Error("Signup Failed");
+      if (responseData.statusCode === 500) throw new Error("Signup Failed");
 
       if (responseData.errors) {
         const [err] = responseData.errors;

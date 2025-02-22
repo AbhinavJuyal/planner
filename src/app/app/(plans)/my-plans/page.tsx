@@ -5,7 +5,9 @@ import CreateBoard from "./create-board";
 
 const getData = async (): Promise<Board[] | undefined> => {
   try {
-    const response = await fetch("http://localhost:3000/api/all-boards");
+    const response = await fetch("http://localhost:3000/api/all-boards", {
+      cache: "no-store",
+    });
     const responseData = await response.json();
     const { data } = responseData;
     return data.buckets;

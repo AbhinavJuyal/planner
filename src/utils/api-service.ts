@@ -1,5 +1,4 @@
 import "server-only";
-import jwt from "jsonwebtoken";
 import { ZodError } from "zod";
 import { prisma } from "@/lib/prisma";
 import { AuthFormType, AuthFormSchema } from "@/schema/auth";
@@ -21,29 +20,6 @@ export const getUserByEmail = async ({
     throw error;
   }
 };
-
-export async function generateJWT(payload: {
-  email: string;
-  fullname: string;
-}) {
-  const jwtSecret = process.env.JWT_SECRET;
-  const jwtExpiry = Number(process.env.JWT_EXPIRY);
-  if (!jwtSecret) throw new Error("JWT_SECRET not present");
-  if (!jwtExpiry) throw new Error("JWT_EXPIRY not present");
-  return jwt.sign(payload, jwtSecret, {
-    expiresIn: jwtExpiry,
-  });
-}
-
-export async function verifyJWT<T>(token: string): Promise<T | undefined> {
-  const jwtSecret = process.env.JWT_SECRET;
-  if (!jwtSecret) throw new Error("JWT_SECRET not present");
-  try {
-    return jwt.verify(token, jwtSecret) as T;
-  } catch {
-    return;
-  }
-}
 
 export function createSuccessResponse(
   message: ApiResponse["message"],

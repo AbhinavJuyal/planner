@@ -46,7 +46,7 @@ const CreateBoard = () => {
       });
       const responseData = await response.json();
 
-      if (responseData.status === 201) {
+      if (responseData.statusCode === 201) {
         router.push("/app/my-plans");
         return;
       }

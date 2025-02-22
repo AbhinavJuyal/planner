@@ -1,13 +1,13 @@
 import { cookies } from "next/headers";
 import bcrypt from "bcrypt";
+import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import {
   getUserByEmail,
-  generateJWT,
   apiLogger,
   validateAuthForm,
 } from "@/utils/api-service";
 import { ServiceResponse } from "@/utils/serviceResponse";
-import { ReasonPhrases, StatusCodes } from "http-status-codes";
+import { generateJWT } from "@/utils/jwt";
 
 const checkPassword = async (userPassword: string, dbPassword: string) => {
   try {
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
       maxAge: Number(process.env.JWT_EXPIRY || 86400),
     });
 
-    return Response.json(ServiceResponse.success("User now logged in!", data), {
+    return Response.json(ServiceResponse.success("User now logged in!", null), {
       status: StatusCodes.OK,
     });
   } catch (error) {
