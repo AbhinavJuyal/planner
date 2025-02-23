@@ -1,8 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { TanstackTable } from "@/components/tanstack-table";
-import { ColumnDef } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  getCoreRowModel,
+  TableOptions,
+} from "@tanstack/react-table";
 import { Board } from "@prisma/client";
 import { Dice5 } from "lucide-react";
 
@@ -35,9 +39,15 @@ interface MyPlansTableProps {
 }
 
 const MyPlansTable = ({ tableData }: MyPlansTableProps) => {
-  return (
-    <>{tableData && <TanstackTable data={tableData} columns={columns} />}</>
-  );
+  const tableSettings = useMemo<TableOptions<Board>>(() => {
+    return {
+      data: tableData ?? [],
+      columns: columns,
+      getCoreRowModel: getCoreRowModel(),
+    };
+  }, [tableData]);
+
+  return <>{tableData && <TanstackTable<Board> settings={tableSettings} />}</>;
 };
 
 export default MyPlansTable;

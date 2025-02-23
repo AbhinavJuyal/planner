@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { CreateBoardSchema, CreateBoardType } from "@/schema/create-board";
 import { apiLogger } from "@/utils/api-service";
 import { verifyJWT } from "@/utils/jwt";
-import { ServiceResponse } from "@/utils/serviceResponse";
+import { ApiResponse } from "@/utils/api-response";
 import { Board, User } from "@prisma/client";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import { cookies } from "next/headers";
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
   } catch {
     const error = new Error("User not authorized!");
 
-    return Response.json(ServiceResponse.failure(error.message, null), {
+    return Response.json(ApiResponse.failure(error.message, null), {
       status: StatusCodes.BAD_REQUEST,
     });
   }
@@ -57,19 +57,16 @@ export async function POST(request: Request) {
   const validation = CreateBoardSchema.safeParse(payload);
 
   if (!validation.success) {
-    return Response.json(
-      ServiceResponse.failure("Proper value not added", null),
-      {
-        status: StatusCodes.BAD_REQUEST,
-      },
-    );
+    return Response.json(ApiResponse.failure("Proper value not added", null), {
+      status: StatusCodes.BAD_REQUEST,
+    });
   }
 
   try {
     await createBoard({ title: payload.title, ownerEmail: decodedToken.email });
 
     return Response.json(
-      ServiceResponse.success(
+      ApiResponse.success(
         "Board created succesfully!",
         payload,
         StatusCodes.CREATED,
@@ -81,7 +78,7 @@ export async function POST(request: Request) {
   } catch (error) {
     apiLogger.error(error);
     return Response.json(
-      ServiceResponse.failure(
+      ApiResponse.failure(
         ReasonPhrases.INTERNAL_SERVER_ERROR,
         payload,
         StatusCodes.INTERNAL_SERVER_ERROR,

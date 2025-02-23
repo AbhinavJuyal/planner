@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
+import { flexRender, TableOptions, useReactTable } from "@tanstack/react-table";
 
 import {
   Table,
@@ -18,21 +12,12 @@ import {
 } from "@/components/ui/table";
 import { Button } from "./ui/button";
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
+interface DataTableProps<TData> {
+  settings: TableOptions<TData>;
 }
 
-export function TanstackTable<TData, TValue>({
-  columns,
-  data,
-}: DataTableProps<TData, TValue>) {
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-  });
+export function TanstackTable<TData>({ settings }: DataTableProps<TData>) {
+  const table = useReactTable<TData>(settings);
 
   return (
     <div>
@@ -76,7 +61,7 @@ export function TanstackTable<TData, TValue>({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={settings.columns.length}
                   className="h-24 text-center"
                 >
                   No results.

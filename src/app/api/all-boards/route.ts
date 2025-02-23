@@ -1,7 +1,7 @@
-import { ServiceResponse } from "@/utils/serviceResponse";
+import { ApiResponse } from "@/utils/api-response";
 import { StatusCodes } from "http-status-codes";
 
-const bucketData = [
+const boardsData = [
   {
     title: "Account Representative II",
     thumbnail:
@@ -126,8 +126,8 @@ const bucketData = [
 
 export async function GET() {
   return Response.json(
-    ServiceResponse.success("", {
-      buckets: bucketData,
+    ApiResponse.success("", {
+      boards: boardsData,
     }),
     { status: StatusCodes.OK },
   );

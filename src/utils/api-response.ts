@@ -1,7 +1,7 @@
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-export class ServiceResponse<T = null> {
+export class ApiResponse<T = null> {
   readonly message: string;
   readonly success: boolean;
   readonly data: T;
@@ -24,7 +24,7 @@ export class ServiceResponse<T = null> {
     data: T,
     statusCode: number = StatusCodes.OK,
   ) {
-    return new ServiceResponse<T>(true, message, data, statusCode);
+    return new ApiResponse<T>(true, message, data, statusCode);
   }
 
   static failure<T>(
@@ -32,7 +32,7 @@ export class ServiceResponse<T = null> {
     data: T,
     statusCode: number = StatusCodes.BAD_REQUEST,
   ) {
-    return new ServiceResponse<T>(false, message, data, statusCode);
+    return new ApiResponse<T>(false, message, data, statusCode);
   }
 }
 

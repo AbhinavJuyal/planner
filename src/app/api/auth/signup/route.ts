@@ -5,7 +5,7 @@ import {
   validateAuthForm,
 } from "@/utils/api-service";
 import { generateJWT } from "@/utils/jwt";
-import { ServiceResponse } from "@/utils/serviceResponse";
+import { ApiResponse } from "@/utils/api-response";
 import { User } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
@@ -48,12 +48,9 @@ export async function POST(request: Request) {
 
     // user already exists
     if (user) {
-      return Response.json(
-        ServiceResponse.failure("User already exists!", null),
-        {
-          status: StatusCodes.BAD_REQUEST,
-        },
-      );
+      return Response.json(ApiResponse.failure("User already exists!", null), {
+        status: StatusCodes.BAD_REQUEST,
+      });
     }
 
     // no existing user
@@ -71,7 +68,7 @@ export async function POST(request: Request) {
     });
 
     return Response.json(
-      ServiceResponse.success(
+      ApiResponse.success(
         "User created successfully!",
         null,
         StatusCodes.CREATED,
@@ -81,7 +78,7 @@ export async function POST(request: Request) {
   } catch (error) {
     apiLogger.fatal(error);
     return Response.json(
-      ServiceResponse.failure(ReasonPhrases.INTERNAL_SERVER_ERROR, null),
+      ApiResponse.failure(ReasonPhrases.INTERNAL_SERVER_ERROR, null),
       {
         status: StatusCodes.INTERNAL_SERVER_ERROR,
       },

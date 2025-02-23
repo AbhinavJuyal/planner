@@ -6,7 +6,7 @@ import {
   apiLogger,
   validateAuthForm,
 } from "@/utils/api-service";
-import { ServiceResponse } from "@/utils/serviceResponse";
+import { ApiResponse } from "@/utils/api-response";
 import { generateJWT } from "@/utils/jwt";
 
 const checkPassword = async (userPassword: string, dbPassword: string) => {
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     // user not registerd
     if (!user) {
       return Response.json(
-        ServiceResponse.failure("User is not registered!", null),
+        ApiResponse.failure("User is not registered!", null),
         {
           status: StatusCodes.BAD_REQUEST,
         },
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     // password is invalid
     if (!verified) {
       return Response.json(
-        ServiceResponse.failure("Password is incorrect.", null),
+        ApiResponse.failure("Password is incorrect.", null),
         {
           status: StatusCodes.BAD_REQUEST,
         },
@@ -68,13 +68,13 @@ export async function POST(request: Request) {
       maxAge: Number(process.env.JWT_EXPIRY || 86400),
     });
 
-    return Response.json(ServiceResponse.success("User now logged in!", null), {
+    return Response.json(ApiResponse.success("User now logged in!", null), {
       status: StatusCodes.OK,
     });
   } catch (error) {
     apiLogger.fatal(error);
     return Response.json(
-      ServiceResponse.failure(
+      ApiResponse.failure(
         ReasonPhrases.INTERNAL_SERVER_ERROR,
         null,
         StatusCodes.INTERNAL_SERVER_ERROR,
