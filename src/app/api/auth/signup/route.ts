@@ -3,7 +3,7 @@ import {
   getUserByEmail,
   apiLogger,
   validateAuthForm,
-} from "@/utils/api-service";
+} from "@/utils/api-helpers";
 import { generateJWT } from "@/utils/jwt";
 import { ApiResponse } from "@/utils/api-response";
 import { User } from "@prisma/client";

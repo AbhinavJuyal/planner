@@ -1,5 +1,11 @@
 import { StatusCodes } from "http-status-codes";
-import { z } from "zod";
+
+export interface ApiResponseType<T> {
+  message: string;
+  success: boolean;
+  data: T;
+  statusCode: number;
+}
 
 export class ApiResponse<T = null> {
   readonly message: string;
@@ -35,11 +41,3 @@ export class ApiResponse<T = null> {
     return new ApiResponse<T>(false, message, data, statusCode);
   }
 }
-
-export const ServiceResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
-  z.object({
-    success: z.boolean(),
-    message: z.string(),
-    data: dataSchema.optional(),
-    statusCode: z.number(),
-  });

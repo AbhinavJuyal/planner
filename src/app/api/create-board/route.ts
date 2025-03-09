@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { CreateBoardSchema, CreateBoardType } from "@/schema/create-board";
-import { apiLogger } from "@/utils/api-service";
+import { apiLogger } from "@/utils/api-helpers";
 import { verifyJWT } from "@/utils/jwt";
 import { ApiResponse } from "@/utils/api-response";
 import { Board, User } from "@prisma/client";

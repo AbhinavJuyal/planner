@@ -1,14 +1,20 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { TanstackTable } from "@/components/tanstack-table";
 import {
   ColumnDef,
   getCoreRowModel,
+  PaginationState,
   TableOptions,
 } from "@tanstack/react-table";
 import { Board } from "@prisma/client";
 import { Dice5 } from "lucide-react";
+import { fetchService } from "@/utils/fetch-service";
+import { appLogger } from "@/utils/logger";
+import Loading from "@/components/loading";
+import clsx from "clsx";
+import PaginationWrapper from "@/components/pagination-wrapper";
 
 const columns: ColumnDef<Board>[] = [
   {
@@ -34,20 +40,69 @@ const columns: ColumnDef<Board>[] = [
   { accessorKey: "owner", header: "Owner" },
 ];
 
-interface MyPlansTableProps {
-  tableData: Board[] | undefined;
-}
+const fetchTableData = async (pagination: PaginationState) => {
+  const { pageIndex, pageSize } = pagination;
+  const data = await fetchService.call<{
+    records: Board[];
+    totalRecords: number;
+  }>("/api/all-boards", {
+    method: "GET",
+    searchParams: {
+      page: pageIndex + 1,
+      pageSize,
+    },
+  });
 
-const MyPlansTable = ({ tableData }: MyPlansTableProps) => {
+  return data;
+};
+
+const MyPlansTable = () => {
+  const [tableData, setTableData] = useState<{
+    records: Board[];
+    totalRecords: number;
+  }>({ records: [], totalRecords: 0 });
+  const [paginationState, setPaginationState] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
   const tableSettings = useMemo<TableOptions<Board>>(() => {
     return {
-      data: tableData ?? [],
+      data: tableData.records,
       columns: columns,
+      rowCount: tableData.totalRecords,
       getCoreRowModel: getCoreRowModel(),
+      state: { pagination: paginationState },
+      onPaginationChange: setPaginationState,
+      manualPagination: true,
+      debugTable: true,
     };
-  }, [tableData]);
+  }, [tableData, paginationState]);
 
-  return <>{tableData && <TanstackTable<Board> settings={tableSettings} />}</>;
+  useEffect(() => {
+    fetchTableData(paginationState).then((value) => {
+      setTableData(value);
+    });
+  }, [paginationState]);
+
+  const contentLoading = tableData.records.length === 0;
+
+  return (
+    <div
+      className={clsx(
+        "grid grid-cols-1",
+        contentLoading ? "grid-cols-1" : "grid-rows-[max-content_1fr]",
+      )}
+    >
+      {contentLoading ? (
+        <Loading />
+      ) : (
+        <div>
+          <TanstackTable<Board> settings={tableSettings} />
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default MyPlansTable;

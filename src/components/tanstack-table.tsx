@@ -1,6 +1,11 @@
 "use client";
 
-import { flexRender, TableOptions, useReactTable } from "@tanstack/react-table";
+import {
+  flexRender,
+  PaginationState,
+  TableOptions,
+  useReactTable,
+} from "@tanstack/react-table";
 
 import {
   Table,
@@ -10,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "./ui/button";
+import PaginationWrapper from "./pagination-wrapper";
 
 interface DataTableProps<TData> {
   settings: TableOptions<TData>;
@@ -18,6 +23,10 @@ interface DataTableProps<TData> {
 
 export function TanstackTable<TData>({ settings }: DataTableProps<TData>) {
   const table = useReactTable<TData>(settings);
+  const { manualPagination, state, rowCount } = settings;
+  const { pagination: paginationState } = state ?? { pagination: undefined };
+
+  const handlePaginationChange = (paginationState: PaginationState) => {};
 
   return (
     <div>
@@ -71,24 +80,31 @@ export function TanstackTable<TData>({ settings }: DataTableProps<TData>) {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Next
-        </Button>
-      </div>
+      {manualPagination && paginationState && rowCount && (
+        <PaginationWrapper
+          paginationState={paginationState}
+          rowCount={rowCount}
+          onChange={handlePaginationChange}
+        />
+      )}
+      {/* <div className="flex items-center justify-end space-x-2 py-4"> */}
+      {/*   <Button */}
+      {/*     variant="outline" */}
+      {/*     size="sm" */}
+      {/*     onClick={() => table.previousPage()} */}
+      {/*     disabled={!table.getCanPreviousPage()} */}
+      {/*   > */}
+      {/*     Previous */}
+      {/*   </Button> */}
+      {/*   <Button */}
+      {/*     variant="outline" */}
+      {/*     size="sm" */}
+      {/*     onClick={() => table.nextPage()} */}
+      {/*     disabled={!table.getCanNextPage()} */}
+      {/*   > */}
+      {/*     Next */}
+      {/*   </Button> */}
+      {/* </div> */}
     </div>
   );
 }

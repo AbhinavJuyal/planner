@@ -5,7 +5,7 @@ import {
   getUserByEmail,
   apiLogger,
   validateAuthForm,
-} from "@/utils/api-service";
+} from "@/utils/api-helpers";
 import { ApiResponse } from "@/utils/api-response";
 import { generateJWT } from "@/utils/jwt";
 

@@ -1,5 +1,6 @@
 import { ApiResponse } from "@/utils/api-response";
 import { StatusCodes } from "http-status-codes";
+import { NextRequest } from "next/server";
 
 const boardsData = [
   {
@@ -124,10 +125,17 @@ const boardsData = [
   },
 ];
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const queryParams = request.nextUrl.searchParams;
+  const page = Number(queryParams.get("page") ?? "1");
+  const pageSize = Number(queryParams.get("pageSize") ?? "10");
+
   return Response.json(
     ApiResponse.success("", {
-      boards: boardsData,
+      records: boardsData.slice(page, page + pageSize + 1),
+      totalRecords: boardsData.length,
+      page,
+      pageSize,
     }),
     { status: StatusCodes.OK },
   );
