@@ -4,3 +4,5 @@ export enum ApiErrorCodes {
   ERR_WRONG_PASSWORD = "ERR_WRONG_PASSWORD",
   ERR_SERVER_FAIL = "ERR_SERVER_FAIL",
 }
+
+export const PAGINATION_PAGE_SIZES = [10, 20, 40, 50];

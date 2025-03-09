@@ -11,10 +11,8 @@ import {
 import { Board } from "@prisma/client";
 import { Dice5 } from "lucide-react";
 import { fetchService } from "@/utils/fetch-service";
-import { appLogger } from "@/utils/logger";
 import Loading from "@/components/loading";
-import clsx from "clsx";
-import PaginationWrapper from "@/components/pagination-wrapper";
+import { PAGINATION_PAGE_SIZES } from "@/utils/constants";
 
 const columns: ColumnDef<Board>[] = [
   {
@@ -63,7 +61,7 @@ const MyPlansTable = () => {
   }>({ records: [], totalRecords: 0 });
   const [paginationState, setPaginationState] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 10,
+    pageSize: PAGINATION_PAGE_SIZES[0],
   });
 
   const tableSettings = useMemo<TableOptions<Board>>(() => {
@@ -88,20 +86,17 @@ const MyPlansTable = () => {
   const contentLoading = tableData.records.length === 0;
 
   return (
-    <div
-      className={clsx(
-        "grid grid-cols-1",
-        contentLoading ? "grid-cols-1" : "grid-rows-[max-content_1fr]",
-      )}
-    >
+    <>
       {contentLoading ? (
-        <Loading />
-      ) : (
-        <div>
-          <TanstackTable<Board> settings={tableSettings} />
+        <div className="w-full h-full flex justify-center align-center">
+          <Loading />
         </div>
+      ) : (
+        <>
+          <TanstackTable<Board> settings={tableSettings} />
+        </>
       )}
-    </div>
+    </>
   );
 };
 

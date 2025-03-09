@@ -4,7 +4,7 @@ import CreateBoard from "./create-board";
 
 const MyPlans = async () => {
   return (
-    <div className="grid grid-cols-1 grid-rows-[min-content_1fr] container h-full mx-auto py-10">
+    <div className="h-full grid grid-cols-1 grid-rows-[min-content_1fr] gap-8">
       <CreateBoard />
       <MyPlansTable />
     </div>

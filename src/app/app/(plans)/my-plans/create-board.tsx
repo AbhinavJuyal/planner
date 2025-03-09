@@ -62,7 +62,7 @@ const CreateBoard = () => {
   };
 
   return (
-    <div className="w-full flex justify-end mb-10">
+    <div className="w-full flex justify-end">
       <Dialog>
         <DialogTrigger asChild>
           <Button>

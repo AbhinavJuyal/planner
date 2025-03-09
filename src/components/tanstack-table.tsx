@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  flexRender,
-  PaginationState,
-  TableOptions,
-  useReactTable,
-} from "@tanstack/react-table";
+import { flexRender, TableOptions, useReactTable } from "@tanstack/react-table";
 
 import {
   Table,
@@ -16,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import PaginationWrapper from "./pagination-wrapper";
+import { ScrollArea } from "./ui/scroll-area";
 
 interface DataTableProps<TData> {
   settings: TableOptions<TData>;
@@ -26,85 +22,65 @@ export function TanstackTable<TData>({ settings }: DataTableProps<TData>) {
   const { manualPagination, state, rowCount } = settings;
   const { pagination: paginationState } = state ?? { pagination: undefined };
 
-  const handlePaginationChange = (paginationState: PaginationState) => {};
-
   return (
-    <div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
+    <div className="w-full h-full flex flex-col">
+      <ScrollArea className="w-full h-[700px]">
+        <div className="rounded-md border overflow-hidden">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                      </TableHead>
+                    );
+                  })}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={settings.columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={settings.columns.length}
+                    className="h-24 text-center"
+                  >
+                    No results.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </ScrollArea>
+      <div className="mt-auto">
+        {manualPagination && paginationState && rowCount && (
+          <PaginationWrapper<TData> table={table} />
+        )}
       </div>
-      {manualPagination && paginationState && rowCount && (
-        <PaginationWrapper
-          paginationState={paginationState}
-          rowCount={rowCount}
-          onChange={handlePaginationChange}
-        />
-      )}
-      {/* <div className="flex items-center justify-end space-x-2 py-4"> */}
-      {/*   <Button */}
-      {/*     variant="outline" */}
-      {/*     size="sm" */}
-      {/*     onClick={() => table.previousPage()} */}
-      {/*     disabled={!table.getCanPreviousPage()} */}
-      {/*   > */}
-      {/*     Previous */}
-      {/*   </Button> */}
-      {/*   <Button */}
-      {/*     variant="outline" */}
-      {/*     size="sm" */}
-      {/*     onClick={() => table.nextPage()} */}
-      {/*     disabled={!table.getCanNextPage()} */}
-      {/*   > */}
-      {/*     Next */}
-      {/*   </Button> */}
-      {/* </div> */}
     </div>
   );
 }

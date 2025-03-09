@@ -1,104 +1,70 @@
 import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { appLogger } from "@/utils/logger";
-import { PaginationState } from "@tanstack/react-table";
-import { MouseEvent } from "react";
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+} from "@/components/ui/select";
+import { Table } from "@tanstack/react-table";
+import { Button } from "./ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { PAGINATION_PAGE_SIZES } from "@/utils/constants";
 
-const MAX_VISIBLE_PAGES = 3;
-
-{
-  /* <PaginationItem> */
-}
-{
-  /*   <PaginationLink href="#" isActive> */
-}
-{
-  /*     2 */
-}
-{
-  /*   </PaginationLink> */
-}
-{
-  /* </PaginationItem> */
+interface PaginationWrapperProps<TData> {
+  table: Table<TData>;
 }
 
-interface PaginationWrapperProps {
-  paginationState: PaginationState;
-  rowCount: number;
-  onChange: (paginationState: PaginationState) => void;
-}
-
-function PaginationWrapper({
-  paginationState,
-  rowCount,
-  onChange,
-}: PaginationWrapperProps) {
-  const { pageIndex, pageSize } = paginationState;
-  const totalPages = Math.ceil(rowCount / pageSize);
+function PaginationWrapper<TData>({ table }: PaginationWrapperProps<TData>) {
+  const tableState = table.getState();
+  const totalPages = table.getPageCount();
+  const { pageIndex, pageSize } = tableState.pagination;
   const currentPage = pageIndex + 1;
-  const pageGroupIndex = Math.ceil(currentPage / MAX_VISIBLE_PAGES);
-  const visiblePages = Array.from({ length: MAX_VISIBLE_PAGES })
-    .fill(0)
-    .map((_, index: number) => {
-      const page = MAX_VISIBLE_PAGES * pageGroupIndex - 2 + index + 1;
-      return Math.min(page, totalPages);
-    });
-  const showLeftEllipsis = currentPage > MAX_VISIBLE_PAGES;
-  const showRightEllipsis = totalPages > MAX_VISIBLE_PAGES;
-
-  const handlePagination = (e: MouseEvent<HTMLAnchorElement>) => {
-    e.stopPropagation();
-    e.preventDefault();
-
-    const element = e.target as HTMLAnchorElement;
-
-    if (element.classList.contains("pagination-item")) {
-      const newPageIndex = Number(element.id);
-      onChange({ pageIndex: newPageIndex, pageSize });
-    }
-  };
 
   return (
-    <Pagination onClick={handlePagination}>
-      <PaginationContent>
-        <PaginationItem>
-          <PaginationPrevious href="#" />
-        </PaginationItem>
-        {showLeftEllipsis && (
-          <PaginationItem>
-            <PaginationEllipsis />
-          </PaginationItem>
-        )}
-        {visiblePages.map((_, index: number) => {
-          return (
-            <PaginationItem key={index + 1}>
-              <PaginationLink
-                href="#"
-                className="pagination-item"
-                id={String(index + 1)}
-              >
-                {index + 1}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        })}
-        {showRightEllipsis && (
-          <PaginationItem>
-            <PaginationEllipsis />
-          </PaginationItem>
-        )}
-        <PaginationItem>
-          <PaginationNext href="#" />
-        </PaginationItem>
-      </PaginationContent>
-    </Pagination>
+    <div className="flex w-full justify-end gap-8">
+      <div className="flex items-center justify-end space-x-2">
+        <Button
+          variant="outline"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span>Previous</span>
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          <span>Next</span>
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+      <p className="text-sm leading-9">
+        Page {currentPage} of {totalPages}
+      </p>
+      <div>
+        <Select
+          defaultValue={String(PAGINATION_PAGE_SIZES[0])}
+          value={String(pageSize)}
+          onValueChange={(value) => table.setPageSize(Number(value))}
+        >
+          <SelectTrigger className="w-[120px]">
+            Show <SelectValue placeholder="Page Size" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {PAGINATION_PAGE_SIZES.map((value, index) => (
+                <SelectItem value={String(value)} key={index}>
+                  {value}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
   );
 }
 

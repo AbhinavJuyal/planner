@@ -11,7 +11,11 @@ const AppLayout = ({
   return (
     <SidebarProvider>
       <AppSideBar />
-      <AppBreadcrumb>{children}</AppBreadcrumb>
+      <AppBreadcrumb>
+        <div className="container h-[calc(100vh_-_64px)] overflow-hidden mx-auto py-10">
+          {children}
+        </div>
+      </AppBreadcrumb>
     </SidebarProvider>
   );
 };
